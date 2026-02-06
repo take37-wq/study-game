@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>勉強育成アプリ</title>
+
+<link rel="manifest" href="manifest.json">
+
+<style>
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(#f5f7fb, #f5f7fb);
+  min-height: 100vh;
+}
+
+header {
+  text-align: center;
+  padding: 12px;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+main {
+  padding: 12px;
+  padding-bottom: 90px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.status {
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+#character {
+  width: 160px;
+  height: 160px;
+  image-rendering: pixelated;
+  display: block;
+  margin: 10px auto;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 12px;
+  border: none;
+  background: #4f46e5;
+  color: white;
+}
+
+nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: #fff;
+  border-top: 1px solid #ddd;
+}
+
+nav button {
+  flex: 1;
+  background: none;
+  color: #333;
+  font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+<header>勉強育成アプリ</header>
+
+<main id="home">
+  <img id="character" src="images/New Piskel-1.png">
+
+  <div class="card status">
+    レベル：<span id="level">1</span><br>
+    EXP：<span id="exp">0</span> / 100<br>
+    合計学習時間：<span id="totalTime">0</span> 分<br>
+    連続学習日数：<span id="streak">0</span> 日
+  </div>
+
+  <div class="card">
+    <button onclick="addStudy()">勉強時間を記録</button>
+  </div>
+
+  <div class="card">
+    <button onclick="completeTask()">タスク完了</button>
+  </div>
+</main>
+
+<div id="effect" style="
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 32px;
+  font-weight: bold;
+  display: none;
+  color: #4f46e5;
+">+EXP</div>
+
+<nav>
+  <button onclick="showHome()">ホーム</button>
+  <button onclick="alert('グラフ画面はこの時点の仕様では未実装')">グラフ</button>
+  <button onclick="alert('交換所はこの時点の仕様では未実装')">交換所</button>
+</nav>
+
+<script>
+let data = JSON.parse(localStorage.getItem("studyData")) || {
+  level: 1,
+  exp: 0,
+  total: 0,
+  streak: 0,
+  lastDate: null
+};
+
+function save() {
+  localStorage.setItem("studyData", JSON.stringify(data));
+}
+
+function showEffect(text) {
+  const e = document.getElementById("effect");
+  e.textContent = text;
+  e.style.display = "block";
+  setTimeout(() => e.style.display = "none", 1200);
+}
+
+function update() {
+  document.getElementById("level").textContent = data.level;
+  document.getElementById("exp").textContent = data.exp;
+  document.getElementById("totalTime").textContent = data.total;
+  document.getElementById("streak").textContent = data.streak;
+
+  let img = "images/New Piskel-1.png";
+  if (data.level >= 3) img = "images/New Piskel-3.png";
+  else if (data.level >= 2) img = "images/New Piskel-2.png";
+  document.getElementById("character").src = img;
+}
+
+function levelUpCheck() {
+  if (data.exp >= 100) {
+    data.exp -= 100;
+    data.level++;
+    showEffect("LEVEL UP!");
+  }
+}
+
+function addStudy() {
+  data.exp += 20;
+  data.total += 30;
+
+  const today = new Date().toDateString();
+  if (data.lastDate !== today) {
+    data.streak++;
+    data.lastDate = today;
+  }
+
+  showEffect("記録");
+  levelUpCheck();
+  save();
+  update();
+}
+
+function completeTask() {
+  data.exp += 10;
+  showEffect("完了");
+  levelUpCheck();
+  save();
+  update();
+}
+
+update();
+</script>
+</body>
+</html>
