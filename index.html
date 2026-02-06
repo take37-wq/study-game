@@ -5,9 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Study Pop RPG</title>
 
+<!-- ===== PWA ===== -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#ff6f91">
-<link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap" rel="stylesheet">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<!-- ===== フォント高速化（追加） ===== -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap"
+      onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap">
+</noscript>
+
+<!-- ===== 画像先読み（追加） ===== -->
+<link rel="preload" as="image" href="New Piskel-1.png">
 
 <style>
 html, body{
@@ -200,9 +217,9 @@ const save = () => localStorage.setItem("studyPopRPG", JSON.stringify(data));
 const expToNext = () => data.level * 100;
 
 function spriteByLevel(){
-  if(data.level < 15) return "image/New Piskel-1.png";
-  if(data.level < 30) return "image/New Piskel-2.png";
-  return "image/New Piskel-3.png";
+  if(data.level < 15) return "New Piskel-1.png";
+  if(data.level < 30) return "New Piskel-2.png";
+  return "New Piskel-3.png";
 }
 
 /* ===== 演出 ===== */
