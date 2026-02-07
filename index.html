@@ -11,13 +11,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap" rel="stylesheet">
 
 <style>
-html,body{min-height:100%}
+html,body{
+  min-height:100%;
+}
 body{
   margin:0;
   font-family:'Kosugi Maru', monospace;
   background:linear-gradient(135deg,#ff9a9e,#fad0c4);
   background-attachment:fixed;
 }
+
+/* ===== ヘッダー ===== */
 header{
   background:#fff;
   text-align:center;
@@ -29,45 +33,91 @@ header{
   height:80px;
   image-rendering:pixelated;
 }
-.stats{font-size:16px;line-height:1.4}
+.stats{
+  font-size:16px;
+  line-height:1.4;
+}
+
+/* ===== ナビ ===== */
 nav{
   position:fixed;
-  bottom:0;left:0;width:100%;
+  bottom:0;
+  left:0;
+  width:100%;
   display:flex;
   background:#fff;
   border-top:4px solid #ff6f91;
   padding-bottom:env(safe-area-inset-bottom);
 }
 nav button{
-  flex:1;padding:12px;border:none;
-  background:#fff;color:#ff6f91;
+  flex:1;
+  padding:12px;
+  border:none;
+  background:#fff;
+  color:#ff6f91;
 }
-nav button.active{background:#ff6f91;color:#fff}
-section{display:none;padding:16px;padding-bottom:120px}
-section.active{display:block}
+nav button.active{
+  background:#ff6f91;
+  color:#fff;
+}
+
+/* ===== セクション ===== */
+section{
+  display:none;
+  padding:16px;
+  padding-bottom:120px;
+}
+section.active{
+  display:block;
+}
+
+/* ===== カード ===== */
 .card{
-  background:#fff;padding:14px;border-radius:16px;
-  margin-bottom:12px;box-shadow:0 6px 0 #ff6f91;
+  background:#fff;
+  padding:14px;
+  border-radius:16px;
+  margin-bottom:12px;
+  box-shadow:0 6px 0 #ff6f91;
 }
 input,select{
-  width:100%;padding:8px;border-radius:12px;
-  border:2px solid #ff6f91;margin-bottom:6px;
+  width:100%;
+  padding:8px;
+  border-radius:12px;
+  border:2px solid #ff6f91;
+  margin-bottom:6px;
 }
 button{
-  background:#ff6f91;color:#fff;border:none;
-  border-radius:12px;padding:8px 12px;
+  background:#ff6f91;
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  padding:8px 12px;
   box-shadow:0 4px 0 #d94f70;
 }
-button:active{transform:translateY(4px);box-shadow:none}
-canvas{
-  width:100%;max-width:340px;height:260px;
-  display:block;margin:0 auto;
+button:active{
+  transform:translateY(4px);
+  box-shadow:none;
 }
+
+/* ===== グラフ ===== */
+canvas{
+  width:100%;
+  max-width:340px;
+  height:260px;
+  display:block;
+  margin:0 auto;
+}
+
+/* ===== 演出 ===== */
 #effectText{
-  position:fixed;top:50%;left:50%;
+  position:fixed;
+  top:50%;
+  left:50%;
   transform:translate(-50%,-50%);
-  font-weight:bold;font-size:36px;
-  display:none;z-index:999;
+  font-weight:bold;
+  font-size:36px;
+  display:none;
+  z-index:999;
 }
 </style>
 </head>
@@ -84,6 +134,7 @@ canvas{
   </div>
 </header>
 
+<!-- ===== タスク ===== -->
 <section id="tasks" class="active">
   <div class="card">
     <input id="taskTitle" placeholder="タスク名">
@@ -98,6 +149,7 @@ canvas{
   <div id="taskList"></div>
 </section>
 
+<!-- ===== 勉強 ===== -->
 <section id="study">
   <div class="card">
     <input id="studyMinutes" type="number" placeholder="勉強時間（分）">
@@ -116,6 +168,7 @@ canvas{
   </div>
 </section>
 
+<!-- ===== 交換所 ===== -->
 <section id="shop">
   <div class="card">
     <input id="itemName" placeholder="リワード名">
@@ -134,11 +187,17 @@ canvas{
 <div id="effectText"></div>
 
 <script>
-let busy=false,weekOffset=0;
+let busy=false;
+let weekOffset=0;
 
 let data=JSON.parse(localStorage.getItem("studyPopRPG"))||{
-  name:"",level:1,exp:0,gold:0,
-  tasks:[],shopItems:[],studyLogs:{}
+  name:"",
+  level:1,
+  exp:0,
+  gold:0,
+  tasks:[],
+  shopItems:[],
+  studyLogs:{}
 };
 
 if(!data.name) data.name=prompt("プレイヤー名を入力");
@@ -151,6 +210,7 @@ function spriteByLevel(){
   return "image/New Piskel-3.png";
 }
 
+/* ===== 演出 ===== */
 function showEffect(text,color){
   effectText.textContent=text;
   effectText.style.color=color;
@@ -167,12 +227,19 @@ function showLevelUp(){
     effectText.style.fontSize="36px";
   },800);
 }
+
+/* ===== レベル判定（修正済み） ===== */
 function levelCheck(){
-  while(data.exp>=expToNext()&&data.level<50){
-    data.exp-=expToNext();data.level++;showLevelUp();
+  let up=false;
+  while(data.exp>=expToNext() && data.level<50){
+    data.exp-=expToNext();
+    data.level++;
+    up=true;
   }
+  if(up) showLevelUp();
 }
 
+/* ===== タスク ===== */
 function addTask(){
   if(!taskTitle.value) return;
   data.tasks.push({
@@ -181,23 +248,26 @@ function addTask(){
     deadline:taskDeadline.value||null
   });
   taskTitle.value=taskDeadline.value="";
-  save();render();
+  save(); render();
 }
 function completeTask(i){
-  if(busy) return;busy=true;
+  if(busy) return;
+  busy=true;
   const t=data.tasks[i];
   data.tasks.splice(i,1);
   data.exp+=t.urgency*30;
   data.gold+=t.urgency*10;
   levelCheck();
   showEffect("完了","#00aaee");
-  save();render();
+  save(); render();
   setTimeout(()=>busy=false,600);
 }
 function deleteTask(i){
-  data.tasks.splice(i,1);save();render();
+  data.tasks.splice(i,1);
+  save(); render();
 }
 
+/* ===== 勉強 ===== */
 function addStudy(){
   const min=+studyMinutes.value;
   if(min<=0) return;
@@ -208,71 +278,86 @@ function addStudy(){
   levelCheck();
   studyMinutes.value="";
   showEffect("記録","#00cc66");
-  save();render();
+  save(); render();
 }
 
+/* ===== 交換所 ===== */
 function addShopItem(){
   if(!itemName.value||!itemCost.value) return;
   data.shopItems.push({name:itemName.value,cost:+itemCost.value});
   itemName.value=itemCost.value="";
-  save();render();
+  save(); render();
 }
 function buyItem(i){
   const s=data.shopItems[i];
   if(data.gold<s.cost) return;
   data.gold-=s.cost;
   showEffect("購入","#ff9933");
-  save();render();
+  save(); render();
 }
 function deleteShopItem(i){
-  data.shopItems.splice(i,1);save();render();
+  data.shopItems.splice(i,1);
+  save(); render();
 }
 
+/* ===== グラフ ===== */
 function getWeekDates(){
   const t=new Date();
   const s=new Date(t);
   s.setDate(t.getDate()-t.getDay()+weekOffset*7);
   return [...Array(7)].map((_,i)=>{
-    const d=new Date(s);d.setDate(s.getDate()+i);return d;
+    const d=new Date(s);
+    d.setDate(s.getDate()+i);
+    return d;
   });
 }
 
-/* ★ 修正点：曜日と日付を2行表示 */
 function drawChart(){
-  const c=studyChart,ctx=c.getContext("2d");
+  const canvas=studyChart;
+  const ctx=canvas.getContext("2d");
   const dpr=window.devicePixelRatio||1;
-  const w=c.clientWidth,h=260;
-  c.width=w*dpr;c.height=h*dpr;
+  const cssW=canvas.clientWidth;
+  const cssH=260;
+
+  canvas.width=cssW*dpr;
+  canvas.height=cssH*dpr;
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,w,h);
+  ctx.clearRect(0,0,cssW,cssH);
 
   ctx.font="13px 'Kosugi Maru'";
   ctx.textAlign="center";
   ctx.textBaseline="middle";
+  ctx.fillStyle="#000";
 
   const dates=getWeekDates();
   const names=["日","月","火","水","木","金","土"];
   const today=new Date().toISOString().split("T")[0];
 
-  const values=dates.map(d=>data.studyLogs[d.toISOString().split("T")[0]]||0);
+  const values=dates.map(d=>{
+    const k=d.toISOString().split("T")[0];
+    return data.studyLogs[k]||0;
+  });
+
   const max=Math.max(60,...values);
-  const barArea=h-90, bw=w/7;
+  const barArea=cssH-90;
+  const w=cssW/7;
 
   dates.forEach((d,i)=>{
     const key=d.toISOString().split("T")[0];
-    const cx=i*bw+bw/2;
+    const cx=i*w+w/2;
 
-    ctx.fillStyle="#000";
-    ctx.fillText(names[i],cx,h-34);
-    ctx.fillText(`${d.getMonth()+1}/${d.getDate()}`,cx,h-18);
+    ctx.fillText(names[i],cx,cssH-34);
+    ctx.fillText(`${d.getMonth()+1}/${d.getDate()}`,cx,cssH-18);
 
     if(key>today) return;
-    const v=values[i]; if(v<=0) return;
-    const bh=(v/max)*barArea;
+    const v=values[i];
+    if(v<=0) return;
+
+    const h=(v/max)*barArea;
     ctx.fillStyle="#ff6f91";
-    ctx.fillRect(i*bw+16,h-bh-50,bw-32,bh);
+    ctx.fillRect(i*w+16,cssH-h-50,w-32,h);
     ctx.fillStyle="#000";
-    ctx.fillText(v+"分",cx,h-bh-62);
+    ctx.fillText(v+"分",cx,cssH-h-62);
   });
 
   nextWeekBtn.disabled=weekOffset>=0;
@@ -280,8 +365,11 @@ function drawChart(){
 
 function changeWeek(n){
   if(weekOffset+n>0) return;
-  weekOffset+=n;drawChart();
+  weekOffset+=n;
+  drawChart();
 }
+
+/* ===== タブ ===== */
 function showTab(id,btn){
   document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
   document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
@@ -289,6 +377,8 @@ function showTab(id,btn){
   btn.classList.add("active");
   if(id==="study") drawChart();
 }
+
+/* ===== 描画 ===== */
 function render(){
   playerName.textContent=data.name;
   level.textContent=data.level;
@@ -299,7 +389,7 @@ function render(){
   taskList.innerHTML="";
   data.tasks.forEach((t,i)=>{
     const today=new Date().toISOString().split("T")[0];
-    const expired=t.deadline&&t.deadline<today;
+    const expired=t.deadline && t.deadline<today;
     taskList.innerHTML+=`
       <div class="card" style="${expired?'opacity:.6':''}">
         ${t.title}<br>
@@ -321,21 +411,21 @@ function render(){
       </div>`;
   });
 
-  totalStudy.textContent=
-    Object.values(data.studyLogs).reduce((a,b)=>a+b,0);
+  const total=Object.values(data.studyLogs).reduce((a,b)=>a+b,0);
+  totalStudy.textContent=total;
 
-  let streak=0,d=new Date();
+  let streak=0;
+  let d=new Date();
   while(true){
     const k=d.toISOString().split("T")[0];
     if(data.studyLogs[k]){streak++;d.setDate(d.getDate()-1);}
     else break;
   }
-  streakEl.textContent=streak;
+  document.getElementById("streak").textContent=streak;
 
   drawChart();
 }
 
-const streakEl=document.getElementById("streak");
 render();
 </script>
 </body>
