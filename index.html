@@ -196,19 +196,29 @@ canvas {
 let busy = false;
 let weekOffset = 0;
 
-let data = JSON.parse(localStorage.getItem("studyPopRPG")) || {
-  name: "",
-  level: 1,
-  exp: 0,
-  gold: 0,
-  tasks: [],
-  shopItems: [],
-  studyLogs: {}
-};
-
-if (!data.name) data.name = prompt("プレイヤー名を入力");
+let data;
+try {
+  data = JSON.parse(localStorage.getItem("studyPopRPG"));
+  if (!data) throw new Error("no data");
+} catch(e) {
+  data = {
+    name: "",
+    level: 1,
+    exp: 0,
+    gold: 0,
+    tasks: [],
+    shopItems: [],
+    studyLogs: {}
+  };
+}
 
 const save = () => localStorage.setItem("studyPopRPG", JSON.stringify(data));
+
+if (!data.name) {
+  data.name = prompt("プレイヤー名を入力") || "プレイヤー";
+  save();
+}
+
 const expToNext = () => data.level * 100;
 
 /* ===== キャラクター画像 ===== */
@@ -289,7 +299,6 @@ function addStudy() {
 
   const d = new Date().toISOString().split("T")[0];
 
-  // 勉強30分で60EXP, 30Gになる設定
   const expPerMinute = 2;   // 1分 = 2EXP
   const goldPerMinute = 1;  // 1分 = 1G
 
