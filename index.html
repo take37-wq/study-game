@@ -5,28 +5,77 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Study Pop RPG</title>
 
+<!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#ff6f91">
+
 <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap" rel="stylesheet">
 
 <style>
-html,body{min-height:100%;}
+html,body{
+  min-height:100%;
+}
 body{
   margin:0;
-  font-family:'Kosugi Maru',sans-serif;
+  font-family:'Kosugi Maru', monospace;
   background:linear-gradient(135deg,#ff9a9e,#fad0c4);
   background-attachment:fixed;
 }
+
+/* ===== ヘッダー ===== */
 header{
   background:#fff;
   text-align:center;
   padding:12px;
   border-bottom:4px solid #ff6f91;
 }
-.sprite{width:80px;height:80px;}
-.stats{font-size:16px;line-height:1.5;}
-section{display:none;padding:16px;padding-bottom:120px;}
-section.active{display:block;}
+.sprite{
+  width:80px;
+  height:80px;
+  image-rendering:pixelated;
+}
+.stats{
+  font-size:16px;
+  line-height:1.4;
+}
+
+/* ===== ナビ ===== */
+nav{
+  position:fixed;
+  bottom:0;
+  left:0;
+  width:100%;
+  display:flex;
+  background:#fff;
+  border-top:4px solid #ff6f91;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+nav button{
+  flex:1;
+  padding:12px;
+  border:none;
+  background:#fff;
+  color:#ff6f91;
+}
+nav button.active{
+  background:#ff6f91;
+  color:#fff;
+}
+nav button:disabled{
+  opacity:.3;
+}
+
+/* ===== セクション ===== */
+section{
+  display:none;
+  padding:16px;
+  padding-bottom:120px;
+}
+section.active{
+  display:block;
+}
+
+/* ===== カード ===== */
 .card{
   background:#fff;
   padding:14px;
@@ -49,37 +98,31 @@ button{
   padding:8px 12px;
   box-shadow:0 4px 0 #d94f70;
 }
-button:active{transform:translateY(4px);box-shadow:none;}
-nav{
-  position:fixed;
-  bottom:0;
-  left:0;
-  width:100%;
-  display:flex;
-  background:#fff;
-  border-top:4px solid #ff6f91;
-  padding-bottom:env(safe-area-inset-bottom);
+button:active{
+  transform:translateY(4px);
+  box-shadow:none;
 }
-nav button{flex:1;background:#fff;color:#ff6f91;}
-nav button.active{background:#ff6f91;color:#fff;}
+
+/* ===== グラフ ===== */
 canvas{
   width:100%;
-  max-width:360px;
-  height:220px;
+  max-width:340px;
+  height:260px;
   display:block;
   margin:0 auto;
 }
+
+/* ===== 演出 ===== */
 #effectText{
   position:fixed;
   top:50%;
   left:50%;
   transform:translate(-50%,-50%);
-  font-size:36px;
   font-weight:bold;
+  font-size:36px;
   display:none;
   z-index:999;
 }
-.deadlineOver{color:red;font-weight:bold;}
 </style>
 </head>
 
@@ -89,12 +132,13 @@ canvas{
   <div id="playerName"></div>
   <img id="sprite" class="sprite">
   <div class="stats">
-    Lv.<span id="level"></span><br>
+    Lv.<span id="level"></span>/50<br>
     EXP <span id="exp"></span><br>
     💰 <span id="gold"></span>
   </div>
 </header>
 
+<!-- ===== タスク ===== -->
 <section id="tasks" class="active">
   <div class="card">
     <input id="taskTitle" placeholder="タスク名">
@@ -104,20 +148,23 @@ canvas{
       <option value="3">緊急度：高</option>
     </select>
     <input id="taskDeadline" type="date">
-    <button onclick="addTask()">追加</button>
+    <button onclick="addTask()">タスク追加</button>
   </div>
   <div id="taskList"></div>
 </section>
 
+<!-- ===== 勉強 ===== -->
 <section id="study">
   <div class="card">
     <input id="studyMinutes" type="number" placeholder="勉強時間（分）">
     <button onclick="addStudy()">記録</button>
   </div>
+
   <div class="card">
     合計学習時間：<span id="totalStudy">0</span> 分<br>
     連続学習日数：<span id="streak">0</span> 日
   </div>
+
   <div class="card" style="text-align:center">
     <button onclick="changeWeek(-1)">◀</button>
     <button id="nextWeekBtn" onclick="changeWeek(1)">▶</button><br><br>
@@ -125,9 +172,10 @@ canvas{
   </div>
 </section>
 
+<!-- ===== 交換所 ===== -->
 <section id="shop">
   <div class="card">
-    <input id="itemName" placeholder="アイテム名">
+    <input id="itemName" placeholder="リワード名">
     <input id="itemCost" type="number" placeholder="必要G">
     <button onclick="addShopItem()">追加</button>
   </div>
@@ -148,153 +196,195 @@ let weekOffset=0;
 
 let data=JSON.parse(localStorage.getItem("studyPopRPG"))||{
   name:"",
-  level:1,exp:0,gold:0,
-  tasks:[],shopItems:[],
+  level:1,
+  exp:0,
+  gold:0,
+  tasks:[],
+  shopItems:[],
   studyLogs:{}
 };
 
-if(!data.name) data.name=prompt("プレイヤー名");
+if(!data.name) data.name=prompt("プレイヤー名を入力");
 const save=()=>localStorage.setItem("studyPopRPG",JSON.stringify(data));
 const expToNext=()=>data.level*100;
 
 function spriteByLevel(){
-  if(data.level<15) return "image/New Piskel-1.png";
-  if(data.level<30) return "image/New Piskel-2.png";
-  return "image/New Piskel-3.png";
+  if(data.level<15) return "New Piskel-1.png";
+  if(data.level<30) return "New Piskel-2.png";
+  return "New Piskel-3.png";
 }
 
-function showEffect(t,c){
-  effectText.textContent=t;
-  effectText.style.color=c;
+/* ===== 演出 ===== */
+function showEffect(text,color){
+  effectText.textContent=text;
+  effectText.style.color=color;
   effectText.style.display="block";
-  setTimeout(()=>effectText.style.display="none",700);
+  setTimeout(()=>effectText.style.display="none",600);
+}
+function showLevelUp(){
+  effectText.textContent="LEVEL UP!!";
+  effectText.style.color="#FFD700";
+  effectText.style.fontSize="42px";
+  effectText.style.display="block";
+  setTimeout(()=>{
+    effectText.style.display="none";
+    effectText.style.fontSize="36px";
+  },800);
 }
 
+/* ===== レベル判定 ===== */
 function levelCheck(){
   let up=false;
-  while(data.exp>=expToNext()&&data.level<50){
+  while(data.exp>=expToNext() && data.level<50){
     data.exp-=expToNext();
-    data.level++;up=true;
+    data.level++;
+    up=true;
   }
-  if(up) showEffect("LEVEL UP!!","#FFD700");
+  if(up) showLevelUp();
 }
 
-/* ---- タスク ---- */
+/* ===== タスク ===== */
 function addTask(){
   if(!taskTitle.value) return;
   data.tasks.push({
     title:taskTitle.value,
     urgency:+taskUrgency.value,
-    deadline:taskDeadline.value
+    deadline:taskDeadline.value||null
   });
   taskTitle.value=taskDeadline.value="";
-  save();render();
+  save(); render();
 }
 function completeTask(i){
   if(busy) return;
   busy=true;
-  const t=data.tasks.splice(i,1)[0];
+  const t=data.tasks[i];
+  data.tasks.splice(i,1);
   data.exp+=t.urgency*30;
   data.gold+=t.urgency*10;
   levelCheck();
-  showEffect("完了","#00aaff");
-  save();render();
+  showEffect("完了","#00aaee");
+  save(); render();
   setTimeout(()=>busy=false,600);
 }
 function deleteTask(i){
   data.tasks.splice(i,1);
-  save();render();
+  save(); render();
 }
 
-/* ---- 勉強 ---- */
+/* ===== 勉強 ===== */
 function addStudy(){
-  const m=+studyMinutes.value;
-  if(m<=0) return;
+  const min=+studyMinutes.value;
+  if(min<=0) return;
   const d=new Date().toISOString().split("T")[0];
-  data.studyLogs[d]=(data.studyLogs[d]||0)+m;
-  data.exp+=m;
-  data.gold+=Math.floor(m/2);
+  data.studyLogs[d]=(data.studyLogs[d]||0)+min;
+  data.exp+=min;
+  data.gold+=Math.floor(min/2);
   levelCheck();
-  showEffect("記録","#00cc66");
   studyMinutes.value="";
-  save();render();
+  showEffect("記録","#00cc66");
+  save(); render();
 }
 
-/* ---- 交換所 ---- */
+/* ===== 交換所 ===== */
 function addShopItem(){
   if(!itemName.value||!itemCost.value) return;
   data.shopItems.push({name:itemName.value,cost:+itemCost.value});
   itemName.value=itemCost.value="";
-  save();render();
+  save(); render();
 }
 function buyItem(i){
   const s=data.shopItems[i];
   if(data.gold<s.cost) return;
   data.gold-=s.cost;
   showEffect("購入","#ff9933");
-  save();render();
+  save(); render();
 }
 function deleteShopItem(i){
   data.shopItems.splice(i,1);
-  save();render();
+  save(); render();
 }
 
-/* ---- グラフ ---- */
+/* ===== グラフ ===== */
 function getWeekDates(){
   const t=new Date();
   const s=new Date(t);
   s.setDate(t.getDate()-t.getDay()+weekOffset*7);
   return [...Array(7)].map((_,i)=>{
-    const d=new Date(s);d.setDate(s.getDate()+i);return d;
+    const d=new Date(s);
+    d.setDate(s.getDate()+i);
+    return d;
   });
 }
 
 function drawChart(){
-  const c=studyChart;
+  const canvas=studyChart;
+  const ctx=canvas.getContext("2d");
   const dpr=window.devicePixelRatio||1;
-  const w=c.clientWidth,h=220;
-  c.width=w*dpr;c.height=h*dpr;
-  const ctx=c.getContext("2d");
+  const cssW=canvas.clientWidth;
+  const cssH=260;
+
+  canvas.width=cssW*dpr;
+  canvas.height=cssH*dpr;
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,w,h);
+  ctx.clearRect(0,0,cssW,cssH);
+
   ctx.font="13px 'Kosugi Maru'";
   ctx.textAlign="center";
+  ctx.textBaseline="middle";
+  ctx.fillStyle="#000";
+
   const dates=getWeekDates();
   const names=["日","月","火","水","木","金","土"];
   const today=new Date().toISOString().split("T")[0];
-  const vals=dates.map(d=>data.studyLogs[d.toISOString().split("T")[0]]||0);
-  const max=Math.max(60,...vals);
-  const bw=w/7;
+
+  const values=dates.map(d=>{
+    const k=d.toISOString().split("T")[0];
+    return data.studyLogs[k]||0;
+  });
+
+  const max=Math.max(60,...values);
+  const barArea=cssH-90;
+  const w=cssW/7;
 
   dates.forEach((d,i)=>{
     const key=d.toISOString().split("T")[0];
-    const x=i*bw;
-    ctx.fillStyle="#000";
-    ctx.fillText(`${d.getMonth()+1}/${d.getDate()}(${names[i]})`,x+bw/2,h-8);
+    const cx=i*w+w/2;
+
+    ctx.fillText(
+      `${names[i]} ${d.getMonth()+1}/${d.getDate()}`,
+      cx,cssH-20
+    );
+
     if(key>today) return;
-    const v=vals[i];
+    const v=values[i];
     if(v<=0) return;
-    const bh=(v/max)*(h-60);
+
+    const h=(v/max)*barArea;
     ctx.fillStyle="#ff6f91";
-    ctx.fillRect(x+10,h-bh-30,bw-20,bh);
+    ctx.fillRect(i*w+12,cssH-h-50,w-24,h);
+    ctx.fillStyle="#000";
+    ctx.fillText(v+"分",cx,cssH-h-62);
   });
+
   nextWeekBtn.disabled=weekOffset>=0;
 }
 
 function changeWeek(n){
   if(weekOffset+n>0) return;
-  weekOffset+=n;drawChart();
+  weekOffset+=n;
+  drawChart();
 }
 
-/* ---- 表示 ---- */
-function showTab(id,b){
+/* ===== タブ ===== */
+function showTab(id,btn){
   document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
   document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
   document.getElementById(id).classList.add("active");
-  b.classList.add("active");
+  btn.classList.add("active");
   if(id==="study") drawChart();
 }
 
+/* ===== 描画 ===== */
 function render(){
   playerName.textContent=data.name;
   level.textContent=data.level;
@@ -303,32 +393,45 @@ function render(){
   sprite.src=spriteByLevel();
 
   taskList.innerHTML="";
-  const today=new Date().toISOString().split("T")[0];
   data.tasks.forEach((t,i)=>{
-    const over=t.deadline&&t.deadline<today;
+    const today=new Date().toISOString().split("T")[0];
+    const expired=t.deadline && t.deadline<today;
     taskList.innerHTML+=`
-    <div class="card">
-      ${t.title}<br>
-      緊急度：${["低","中","高"][t.urgency-1]}<br>
-      ${t.deadline?`期限：<span class="${over?"deadlineOver":""}">${over?"期限切れ":t.deadline}</span><br>`:""}
-      <button onclick="completeTask(${i})">完了</button>
-      <button onclick="deleteTask(${i})">削除</button>
-    </div>`;
+      <div class="card" style="${expired?'opacity:.6':''}">
+        ${t.title}<br>
+        緊急度：${["低","中","高"][t.urgency-1]}<br>
+        期限：${t.deadline||"なし"} ${expired?"⚠️期限切れ":""}<br>
+        <button onclick="completeTask(${i})">完了</button>
+        <button onclick="deleteTask(${i})">削除</button>
+      </div>`;
   });
 
   shopList.innerHTML="";
   data.shopItems.forEach((s,i)=>{
     shopList.innerHTML+=`
-    <div class="card">
-      ${s.name}<br>必要G：${s.cost}<br>
-      <button onclick="buyItem(${i})">交換</button>
-      <button onclick="deleteShopItem(${i})">削除</button>
-    </div>`;
+      <div class="card">
+        ${s.name}<br>
+        必要G：${s.cost}<br>
+        <button onclick="buyItem(${i})">交換</button>
+        <button onclick="deleteShopItem(${i})">削除</button>
+      </div>`;
   });
 
-  totalStudy.textContent=Object.values(data.studyLogs).reduce((a,b)=>a+b,0);
+  const total=Object.values(data.studyLogs).reduce((a,b)=>a+b,0);
+  totalStudy.textContent=total;
+
+  let streak=0;
+  let d=new Date();
+  while(true){
+    const k=d.toISOString().split("T")[0];
+    if(data.studyLogs[k]){streak++;d.setDate(d.getDate()-1);}
+    else break;
+  }
+  document.getElementById("streak").textContent=streak;
+
   drawChart();
 }
+
 render();
 </script>
 </body>
