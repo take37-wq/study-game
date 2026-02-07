@@ -214,6 +214,7 @@ function spriteByLevel(){
 function showEffect(text,color){
   effectText.textContent=text;
   effectText.style.color=color;
+  effectText.style.fontSize="36px";
   effectText.style.display="block";
   setTimeout(()=>effectText.style.display="none",600);
 }
@@ -228,7 +229,7 @@ function showLevelUp(){
   },800);
 }
 
-/* ===== レベル判定（修正済み） ===== */
+/* ===== レベル判定（最終修正版） ===== */
 function levelCheck(){
   let up=false;
   while(data.exp>=expToNext() && data.level<50){
@@ -237,6 +238,7 @@ function levelCheck(){
     up=true;
   }
   if(up) showLevelUp();
+  return up;
 }
 
 /* ===== タスク ===== */
@@ -257,8 +259,12 @@ function completeTask(i){
   data.tasks.splice(i,1);
   data.exp+=t.urgency*30;
   data.gold+=t.urgency*10;
-  levelCheck();
-  showEffect("完了","#00aaee");
+
+  const leveled = levelCheck();
+  if(!leveled){
+    showEffect("完了","#00aaee");
+  }
+
   save(); render();
   setTimeout(()=>busy=false,600);
 }
@@ -275,9 +281,13 @@ function addStudy(){
   data.studyLogs[d]=(data.studyLogs[d]||0)+min;
   data.exp+=min;
   data.gold+=Math.floor(min/2);
-  levelCheck();
+
+  const leveled = levelCheck();
+  if(!leveled){
+    showEffect("記録","#00cc66");
+  }
+
   studyMinutes.value="";
-  showEffect("記録","#00cc66");
   save(); render();
 }
 
