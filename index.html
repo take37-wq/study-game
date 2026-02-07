@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Study Pop RPG</title>
 
 <link rel="manifest" href="manifest.json">
@@ -141,7 +141,7 @@ canvas{
     <select id="taskUrgency">
       <option value="1">緊急度：低</option>
       <option value="2">緊急度：中</option>
-      <option value="3">緊急度：高</option>
+      <option value="3">高</option>
     </select>
     <input id="taskDeadline" type="date">
     <button onclick="addTask()">タスク追加</button>
@@ -229,7 +229,7 @@ function showLevelUp(){
   },800);
 }
 
-/* ===== レベル判定（最終修正版） ===== */
+/* ===== レベル判定 ===== */
 function levelCheck(){
   let up=false;
   while(data.exp>=expToNext() && data.level<50){
@@ -434,6 +434,14 @@ function render(){
   document.getElementById("streak").textContent=streak;
 
   drawChart();
+
+  /* ===== モバイルのズーム防止 ===== */
+  document.querySelectorAll("#study button").forEach(btn=>{
+    btn.addEventListener("touchstart", e=>{
+      e.preventDefault();
+      btn.click();
+    });
+  });
 }
 
 render();
